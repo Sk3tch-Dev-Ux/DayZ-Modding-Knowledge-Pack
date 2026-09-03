@@ -63,7 +63,7 @@ Follow the debug order: config load -> entity spawn -> action location -> animat
 - [ ] **class Doors** maps each intended source through **component**.
 - [ ] (since 1.30 Exp, if the door should take a padlock or code lock) entity `attachments[]` include `Att_CombinationLock` and/or `Att_CodeLock`; the matching **class Doors** entry sets `relatedInventorySlots[]`; Memory has slot selections `att_combinationlock` / `att_codelock` and any `interactPositionPoint` / `interactDirPoint` pair.
 - [ ] (since 1.30 Exp) any script override of door-open conditions targets `CanDoorBeOpened(notnull DoorManipulationParams params)`, not only the `int` wrapper.
-- [ ] Door sound names are verified in **DZ\sounds\hpp\config.cpp**.
+- [ ] Door sound names are verified in **DZ\sounds\hpp\config.cpp**. The 32 complete sound sets, and the nine that lack `Rattle` or `OpenABit`, are enumerated in [door-model-cfg-and-config.md](references/door-model-cfg-and-config.md) — `doorMetalSmall` is not the only option.
 - [ ] **DamageSystem** has GlobalHealth, GlobalArmor, and appropriate DamageZones.
 - [ ] In-game tests cover action position, motion, sounds, physical LODs, damage, spawn state, and RPT logs.
 
