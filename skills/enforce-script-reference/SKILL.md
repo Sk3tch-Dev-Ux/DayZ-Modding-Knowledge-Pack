@@ -1112,3 +1112,17 @@ aqui, un servidor y una caja compartida que otras sesiones estaban esperando.
 **Corolario operativo:** cuando la caja es un recurso en cola, el arranque de servidor no es
 solo el gate, es el gate MAS BARATO que existe — falla en ~20 s. Gastar 20 s en arrancar
 antes de encolar un lote de 30 min no es prudencia, es aritmetica.
+
+## tR_* mods extraction: plugin and config plumbing (added 2026-09-30)
+
+From Tierro's tR_Dependence (`D:\Cursor Knowledge Dive\tR_Dependence\Scripts\4_World\`, findings B_001, B_002, B_004, B_013, D_032, D_045, A_042).
+
+- **Server JSON config plugin.** It is a `PluginBase` with a static `GetInstance()` (`GetPluginManager().GetPluginByType`) and a static `GetConfig()`. Server `OnInit` runs `MakeDirectory("$profile:tR_Parameters/")`. If the file exists it is loaded with `JsonFileLoader<T>.JsonLoadFile`; otherwise `new T()` (defaults in the constructor) is saved with `JsonSaveFile`. Existing files are never merged with new defaults, so added keys stay at their type default on old servers; version the file or merge. `tR_ExplosiveCharge_Plugin.c:2-57`
+- **Config mirrored server→client with one CF RPC handler.** `AddRPC("<Plugin>", "RequestConfig", this, SingleplayerExecutionType.Both)`. The client sends an empty `RequestConfig` in `OnInit`. The handler branches on `CallType.Server` (reply with `Param1<ref Cfg>(m_Config)` to the sender, guaranteed) and `CallType.Client` (read and replace `m_Config`). This serializes the whole config object in one param. **Strip secrets first**: tR sent its Discord webhook to every client (B_003). `tR_ExplosiveCharge_Plugin.c:16-45`
+- **Plugin side matrix.** In a modded `PluginManager.Init`, `RegisterPlugin(name, client, server)`: `(true,true)` for shared config, `(false,true)` for server-only (notifications, licensing), `(true,false)` for client-only UI. Sibling-mod plugins are registered under that mod's CfgMods auto-define. `PluginManager.c:1-15`
+- **Shared action instances hold no per-player state.** Action objects are singletons per player action manager, shared across uses. tR stored `m_ResultEntity` on the action, so concurrent users can write into another player's result (D_045). Keep per-use data in `ActionData` (subclass it).
+- **Null-check `target.GetObject()` in `ActionCondition`** before any call (D_032).
+- **JSON by concatenation needs escaping.** `"{\"content\":\"" + playerName + "\"}"` breaks on a `"` in the name (B_013). Escape `\` and `"`, or build the payload with `JsonSerializer`.
+- **Modding a third-party class you don't list in `requiredAddons`** (CodeLock, Expansion, HDSN, KB C4 behind `#ifdef`) compiles only when it is present, but the modded-class chain order then follows the launch line (A_042).
+- Correction: string literals containing `//` or `/*` are **not** comments. A naive comment stripper (including an early japm-pbo-recovery build) truncates `"https://..."` (B_014).
+<!-- tr-mods-extraction: findings B_001, B_002, B_003, B_004, B_013, B_014, D_032, D_045, A_042 | pass: 1 | date: 2026-09-30 -->

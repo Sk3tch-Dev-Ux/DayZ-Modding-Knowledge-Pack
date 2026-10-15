@@ -188,3 +188,12 @@ not persistence.
 - [ ] Do not clone vanilla's unchecked `$mission:` `FileSerializer` overwrite.
 - [ ] Classify CombinationLock 142→144 as gated known/legacy; classify
       ThermalBias 142→144 as failed/truncated unless Bohemia wipes characters.
+
+## tR_* mods extraction: three persistence patterns (added 2026-09-30)
+
+From Tierro's tR_* mods (`D:\Cursor Knowledge Dive\tR_*`, findings D_040, E_001, E_002, C_001).
+
+1. **Persist a link to another world entity by persistent ID.** At bind time, `target.GetPersistentID(b1, b2, b3, b4)` goes into four ints, which are written in `OnStoreSave` together with the related state (component name, timer flag). In `AfterStoreLoad`, re-resolve with `GetGame().GetEntityByPersitentID(b1, b2, b3, b4)` (engine spelling, missing "s") and treat a null result as "target gone": every later use must be null-safe (tR's detonation guard was not, D_039). Clear the IDs when the holder moves to HANDS or CARGO. `tR_ExplosiveCharge/Scripts/4_World/tR_Pack.c:95-106,248-326`
+2. **Extending vanilla's packed state by appending to the stream (Contract 1).** A structure with more than 93 parts writes three extra part-bitmask ints after `super.OnStoreSave` (order: gate state, `m_IsOpened`, int4, int5, int6) and reads them back in the same order, returning false on any failed read. It is legitimate, since the mod owns the entity, but it has **no mod-owned version marker**, so the only branch point is the engine `version` (a copied Fence `version < 110` branch). Add your own leading version int before shipping such an extension. `tR_Fortification/Scripts/4_World/tR_FortificationKit.c:1912-1960`
+3. **Reading another mod's CF ModStorage key for compatibility.** Under `#ifdef EXPANSION_MODSTORAGE`, a non-Expansion structure overrides `CF_OnStoreLoad`, reads `storage[DZ_Expansion_BaseBuilding]` and replays Expansion's own legacy (`ctx.GetVersion() < 38`) code-lock fields. It then defers `ExpansionCodeLockRemove` by 1000 ms if the lock may no longer attach. `CF_OnStoreSave` writes nothing itself. It works, but it couples your load to another mod's private layout; pin the Expansion version it was written against. `tR_FortificationKit.c:156-184`
+<!-- tr-mods-extraction: findings D_040, E_001, E_002, C_001 | pass: 1 | date: 2026-09-30 -->

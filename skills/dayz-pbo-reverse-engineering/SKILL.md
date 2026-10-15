@@ -16,7 +16,7 @@ Workflow for systematically extracting patterns from another author's DayZ mod(s
 - User wants to audit a third-party mod for security/compatibility/quality
 - User wants to catalog 3D assets available from a workshop entry
 - User wants to learn modding techniques from a prolific modder's catalog
-- Obfuscated PBO (GUID/COM1/BOM filenames, encrypted strings) → japm-pbo-recovery (+kgb-deobfuscator for KGB_DF marker) FIRST, then return here for the sweep. Both are optional external skills and are **not** included in this pack; without them an obfuscated PBO cannot be swept — report that and stop, rather than sweeping obfuscated output.
+- Obfuscated PBO (GUID/COM1/BOM filenames, encrypted strings) → [[japm-pbo-recovery]] FIRST (installed at `~/.claude/skills/japm-pbo-recovery/`, handles PBO Tools v1.8.1 and both string-encryption generations), then return here for the sweep. A KGB_DF marker still needs the external `kgb-deobfuscator`, which is not installed; without it report that and stop rather than sweeping obfuscated output.
 
 **NOT for**:
 - Building your own PBO (use [[dayz-pbo-build]])
@@ -392,7 +392,7 @@ Specific algorithm cited, line ranges proven, novelty justified, skill destinati
 - [[dayz-pbo-build]] — opposite direction (packaging your own)
 - [[dayz-aviation]] — example of skill created via this workflow
 - [[dayz-particles]] — example of orthogonal-domain skill (created with <7 threshold relaxed)
-- `japm-pbo-recovery` — recover source from JAPM/PBO-Tools-obfuscated PBOs BEFORE the sweep. Optional external skill, **not** included in this pack.
+- [[japm-pbo-recovery]] — recover source from JAPM/PBO-Tools-obfuscated PBOs BEFORE the sweep. Installed locally (created 2026-09-30).
 - `kgb-deobfuscator` — strip KGB_DF preprocessor cruft after JAPM recovery. Optional external skill, **not** included in this pack.
 
 ## Lessons-learned from LM_Planes project

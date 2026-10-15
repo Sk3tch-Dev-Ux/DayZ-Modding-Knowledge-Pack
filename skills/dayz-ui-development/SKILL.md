@@ -1683,3 +1683,16 @@ Para retomarlas basta con el display encendido: cargar `$profile:uiprobe.layout`
 
 
 
+
+## tR_* mods extraction: build-materials hint panel (added 2026-09-30)
+
+From Tierro's tR_Dependence (`tR_Dependence/Scripts/4_World/tR_HintGui.c`, layouts in `tR_Dependence/tR_Design/`; findings B_015, B_016).
+
+- **What it does.** A client-only `PluginBase.OnUpdate`, gated by a server JSON flag, runs every frame:
+  1. `ActionManagerClient.FindActionTarget()` and `GetPossibleActions(ContinuousDefaultActionInput)`;
+  2. finds `ActionBuildPart` and gets `ConstructionActionData.GetBuildPartAtIndex(action.GetVariantID())`;
+  3. walks `CfgVehicles <type> Construction <main> <part> Materials` (`type`, `slot_name`, `quantity`, where -1 shows as 1);
+  4. renders a `WrapSpacer` of `ItemPreviewWidget` cells with quantity badges, one 320×70 card per part.
+- **Bug to avoid:** each rebuild spawns the preview entity with `CreateObjectEx(type, "0 0 0", ECE_LOCAL|ECE_CREATEPHYSICS|ECE_TRACE)` and only `Unlink()`s widgets on cleanup. That leaks local entities with physics at the world origin. Cache the preview entities by type, delete them in cleanup, and don't use `ECE_CREATEPHYSICS` for a preview. The panel also doesn't rebuild when the build variant changes (stale materials). `tR_HintGui.c:22-32,100-114,155-162`
+- A config `Materials type` typo (`"WoodenPlanks"`) gives an empty preview while building still works, because `slot_name` drives `HasMaterials` (B_044).
+<!-- tr-mods-extraction: findings B_015, B_016, B_017, B_018, B_044 | pass: 1 | date: 2026-09-30 -->

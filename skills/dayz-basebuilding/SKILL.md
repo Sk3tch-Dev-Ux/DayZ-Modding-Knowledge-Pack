@@ -136,6 +136,14 @@ base-building entity done, verify ALL of these — each is a silent-corruption s
   still writes `m_SyncParts01/02/03` then `m_HasBase` (`:420-430`). `Rebuilding` on `BuildingBase` is a
   different stream: ten ints `m_SyncParts1`..`10`, 2 bits per part, `REBUILDING_STORAGE_VERSION = 1`
   (`Rebuilding.c:3,7-16,502-515`). Do not mix the two caps.)
+  **Correction (2026-09-30, tR mods sweep): 93 is the vanilla packing, not an engine limit.**
+  `tR_Fortification` ships 160 parts. It overrides `RegisterPartForSync` / `UnregisterPartForSync` /
+  `IsPartBuildInSyncData`, sends ids 1..93 to `super`, and packs 94..186 into three extra
+  `RegisterNetSyncVariableInt` ints saved after `super.OnStoreSave`. This works because vanilla
+  `SetPartFromSyncData` asks the overridable `IsPartBuildInSyncData(part.GetId())` (1.29
+  `basebuildingbase.c:206,280`). Also statically verified on 1.30 Exp (`scripts.pbo`
+  `BaseBuildingBase.c:137,166,195,269`, callers `:563,595,635`); not yet exercised in-game on 1.30. The pattern is in `references/tr-mods-extraction.md` §2.
+  Keep ids unique; the default stays 1..93 unless you add the extension.
 - **Damage-zone name MUST equal the part name, lowercased.** `EEHealthLevelChanged` lowercases the zone and
   looks up the part by that name (`basebuildingbase.c:507-517`); a mismatch means damage never destroys the part.
 - **`OnStoreSave`/`OnStoreLoad` order is strict.** Save writes `m_SyncParts01`, `02`, `03`, then `m_HasBase`
@@ -280,6 +288,27 @@ against the real `.c` and `.p3d`, never from memory.
 - `references/dayz-1-30-construction-rebuilding.md` — 1.30 Exp hierarchy (`ConstructionBasic` /
   `ConstructionBase` / `Rebuilding`), `ConstructionPartTypeData`, `*ServerEx` / `IsCollidingEx`,
   obsolete collision-trigger wrappers, brick/mortar/trowel loop, Fence `DigitalCodeLock`.
+- `references/tr-mods-extraction.md` — patterns from a shipped commercial base-building framework (Tierro's
+  tR_* mods, 2026-09-30): more than 93 parts, memory-point snapping, a level/wall/finish part grammar,
+  two-stage doors and sashes, per-part damage zones, third-party lock shims, kits, winter variants,
+  structures anchored to world trees, and a catalogue of its bugs. Raiding and explosives go to `dayz-raiding-explosives`.
+
+## tR_* mods extraction (added 2026-09-30)
+
+Swept from the recovered tR_* mods (Fortification, Stockade, Modules, TreeHouse, ExplosiveCharge and the
+Dependence framework). 184 findings in total; the base-building ones are in `references/tr-mods-extraction.md`.
+Rules worth carrying into new work:
+
+- **Gate a shared override with a config flag, not a class check.** `ConfigGetBool("tR_BaseBuilding")` in every
+  modded vanilla class, falling through to `super` otherwise. Scope the override to that flag. tR forgot to
+  in `Construction.IsColliding`, and vanilla fences then lost collision with tents and vehicles.
+- **A non-Fence structure with gate parts must override `Construction.ExceptionCheck`.** Vanilla calls
+  `GetConstructionPart("wall_base_down").IsBuilt()` for every `IsGate()` part, and that dereferences null on other structures.
+- **Never replace `Hologram.EvaluateCollision`'s verdict.** OR your check into it. tR's `SetIsColliding(myCheck)`
+  dropped the floating, terrain, water, roof and player checks.
+- **The explosion "protect dependents" trick needs both sides.** Restoring the old level in `EEHealthLevelChanged`
+  and then calling `super` with the new level still ruins the part. Reset any per-hit flag on every path.
+<!-- tr-mods-extraction: findings A_001-A_039, B_006-B_043, C_001-C_034, D_001-D_035, E_001 | pbo: tR_* | pass: 1 | date: 2026-09-30 -->
 
 ## Reglas promovidas del corpus de lecciones (added 2026-07-27)
 
@@ -323,7 +352,7 @@ Digest J (`work/out2/digest-J-construction-locks-bunker.md` §§1,3–5). Every 
 - [ ] Replace overrides of `BuildPartServer` / `DismantlePartServer` / `IsColliding` with `*Ex`.
 - [ ] Stop using construction-box triggers; build `CollisionCheckData` and call `IsCollidingEx`.
 - [ ] Access construction via `GetConstruction()` / `GetConstructionBasic()`, never the raw field from outside.
-- [ ] Keep `BaseBuildingBase` `id` in 1..93 and the `OnStoreSave` order `01,02,03,m_HasBase`.
+- [ ] Keep `BaseBuildingBase` `id` in 1..93 and the `OnStoreSave` order `01,02,03,m_HasBase` (or the >93 extension from `references/tr-mods-extraction.md` §2; its hooks are unchanged in 1.30 Exp).
 - [ ] Do not write Rebuilding's 10-int stream into a `BaseBuildingBase` subclass.
 - [ ] If attaching a code lock to a Fence, use slot `Att_CodeLock` and `DigitalCodeLock`.
 - [ ] If subclassing `CombinationLock`, handle stream v143.

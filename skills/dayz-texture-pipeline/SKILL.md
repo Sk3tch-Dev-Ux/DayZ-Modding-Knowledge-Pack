@@ -474,3 +474,13 @@ autoilumina de noche. DXT5 conserva el alfa pero suaviza los bordes.
 Recomposición desde una fuente DECAL (icono en el canal alfa): RGB = color del swatch por píxel,
 ALFA = el alfa real. Nunca aplanar alfa sobre RGB — el bake de blanco-sobre-negro fue justo ese
 error, y produce el decal opaco que parece un problema de shader.
+
+## tR_* mods extraction: penetration surfaces across PBOs (added 2026-09-30)
+
+Findings B_045, D_023, D_029, D_030 (Tierro's tR_* mods, `D:\Cursor Knowledge Dive\tR_*`).
+
+- **One `.bisurf`, many mods.** Each structure mod ships stub penetration rvmats (`tR_<Mod>/tR_Penetration/tR_Logs|Metal|Planks.rvmat`, ambient and diffuse only, `PixelShaderID Normal`) whose `surfaceInfo` points into a **different** PBO: `tR_Custom\tR_Penetration\tR_Logs.bisurf`. Geometry LODs reference the local rvmat. The server owner's override pack then holds the actual surface values, so bullet behaviour can be retuned without touching the originals. The catch: every structure mod hard-depends on that pack being loaded.
+- **Bulletproof surface:** `Density=1000000; bulletPenetrability=0; deflection=0.7; transparency=0; impact="Hit_Wood"; soundHit="wood";` (metal uses `Hit_Metal`). Dirt: `Density=1000000; deflection=0.5; rough=0.1; friction=0.9; restitution=0.1; impact="Hit_Dirt"; soundHit="soft_ground"`. `tR_Custom/tr_penetration/*.bisurf:1-13`; `tR_TreeHouse/tR_Penetration/tR_Dirt.bisurf:1-13`
+- **Trap: stale cross-mod paths get binarized in.** `tR_Dirt.rvmat` and the binarized `tR_Digged_Ground.p3d` both point to `tR_Dugout\tR_Penetration\tR_Dirt.bisurf`, a mod that isn't shipped, while the file sits in `tR_TreeHouse`. The surface silently falls back. When moving a surface between mods, grep the rvmats **and** the p3d strings (ODOL embeds the path) (D_030).
+- A countdown display that swaps hidden-selection textures at runtime must do it where it renders. Calling `SetObjectTexture` only inside `IsServer()` is suspected not to reach dedicated-server clients (D_042, unverified).
+<!-- tr-mods-extraction: findings B_045, D_023, D_029, D_030, D_042 | pass: 1 | date: 2026-09-30 -->

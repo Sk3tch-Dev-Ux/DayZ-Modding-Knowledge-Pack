@@ -145,3 +145,14 @@ vehicle will not produce a working radial, even though both mechanisms use names
 - [Door open conditions and locks](references/door-model-cfg-and-config.md#door-open-conditions-and-locks-dayz-130-exp)
 - [Building lock integration examples](references/worked-examples.md#building-locks-dayz-130-exp)
 - [1.30 Memory points and lock slot selections](references/lods-and-object-builder.md#dayz-130-exp-memory-points-and-lock-slots)
+
+## Roller and garage doors on BaseBuildingBase (added 2026-09-30)
+
+From Tierro's tR_Modules garage door (finding D_018, D_019; `tR_Modules/Scripts/4_World/tR_GarageDoorKit.c`, `tR_Modules/config.cpp:5671-6091`).
+
+- A monolithic `BaseBuildingBase` with **no `Construction{}`**: it deploys complete from a heavy kit (`GetDeployTime()=7.0`) and is dismantled whole with tools from config `tR_DismantleTools[]={"Wrench","Screwdriver"}`.
+- Open = handle source to 1. After 0.3 s, a single source `tR_Rollets_Translation` goes 0→1 (`animPeriod=3`) and drives about 48 slat bones (`tR_Rollet_3..50`) in model.cfg. A looping soundset is stopped by a completion poller.
+- A lock can attach only while the rollets phase is 0 (closed).
+- Destruction: only zone `tR_Rollets` has `transferToGlobalCoef=1`, and `EEHealthLevelChanged` calls `DeleteSafe()` at `STATE_RUINED`, so only damage to the slats can destroy it.
+- Two-stage hinged doors, sashes and lock-follower sources: `dayz-basebuilding/references/tr-mods-extraction.md` §5.
+<!-- tr-mods-extraction: findings D_018, D_019 | pass: 1 | date: 2026-09-30 -->

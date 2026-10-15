@@ -981,3 +981,15 @@ que la tasa describe la configuracion enviada y no la cola de experimentos.
 pase. Estas celdas son aterrizajes guionizados, en un solo sitio y **sin tocar el ciclico**;
 lo unico que autorizan a decir es que el banco, tal como esta, no reproduce el defecto en la
 configuracion enviada.
+
+## Server-owner override packs and secrets (added 2026-09-30)
+
+From the tR_Custom pack shipped alongside Tierro's tR_* mods (findings B_003, B_039, B_042, B_043, B_047).
+
+- **Shape.** One PBO with a plain root `config.cpp` plus one sub-config per target mod. Each has its own `CfgPatches tR_<Mod>_Custom` whose `requiredAddons` names the target addon (so it loads after it), and it re-declares the target classes **with the same parent**, changing only values.
+- **Restate only what you change.** tR_Custom redeclares 63 CfgSlots to change 2. Every restated value hides future upstream fixes.
+- **Effects.**
+  - The pack becomes all-or-nothing: each sub-patch hard-requires its target addon.
+  - Disabling a part by setting a material quantity above the slot's `stackMax` works, but it is invisible to players; remove the part instead.
+- **Secrets never go into anything a client receives** (configs mirrored by RPC, client-side JSON, PBO literals). tR mirrored a Discord webhook to every client and shipped a license-verification secret inside its PBO.
+<!-- tr-mods-extraction: findings B_003, B_039, B_042, B_043, B_047, A_046 | pass: 1 | date: 2026-09-30 -->

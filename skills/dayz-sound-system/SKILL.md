@@ -258,3 +258,13 @@ Deep-dive updates: `references/sonido-deep-dive.md`. Shared AI noise: skill `day
 - [ ] Custom bushes: `VegetationSounds` on the `CfgNonAIVehicles` class, or the `CUSTOM_PLAYER_MOVEMENT_SOUNDSETS` macro.
 - [ ] Do not call `SurfaceInfo.GetSoundHitType` — not in this Enforce dump.
 - [ ] Load `references/sonido-deep-dive.md` for player-event and NoiseSystem signature tables.
+
+## tR_* mods extraction: structure sounds (added 2026-09-30)
+
+Findings A_040, B_025, D_034, D_041, D_046 (Tierro's tR_* mods).
+
+- **Knock with a synced cooldown.** Register item sounds above vanilla's ids: `ItemSoundHandler.AddSound(35|36, soundset)` in `InitItemSounds`, with constants in 3_Game (vanilla uses up to 29, cap `ITEM_SOUNDS_MAX` 63). The action's `OnStartServer` sets a netsynced `m_CanKnock=false` and calls `StartItemSoundServer(id)`, then `CallLater(3000)` to `StopItemSoundServer` and re-enable. Metal or wood is picked from the part name. `tR_Dependence/Scripts/4_World/tR_ActionKnock.c:1-90`; `BaseBuildingBase.c:190-210`
+- **Countdown ticks:** clients play a tick soundset whenever a netsynced counter changes (`OnVariablesSynchronized`), and a second soundset when an "armed" bool flips.
+- **Double-play trap.** A door that syncs a lock-handle bool, and 0.3 s later `m_IsOpened`, must not call the same `OpenFence()` (which plays the start sound) from both edges. tR does, and the sound plays twice into one `EffectSound` member, so the stop call only stops the second one (D_034, suspected).
+- Explosive deploy audio: `GetDeploySoundset()` = `placeImprovisedExplosive_SoundSet`, `GetLoopDeploySoundset()` = `improvisedexplosive_deploy_SoundSet`. Kit loop sound by convention: `GetType() + "_SoundSet"`.
+<!-- tr-mods-extraction: findings A_040, B_025, B_034, D_034, D_041, D_046 | pass: 1 | date: 2026-09-30 -->

@@ -786,3 +786,12 @@ blocks: [dayz-1-30-model-pipeline.md](references/dayz-1-30-model-pipeline.md).
 - [ ] Unbinarized mesh loop: `-cacheP3D=1` on Diag/Buldozer.
 - [ ] Character/infected graphs: `.agf` via Workbench — not `model.cfg` here.
 
+
+## Structures assembled from component proxies (added 2026-09-30)
+
+From Tierro's tR_* mods (finding C_016). A 160-part base structure is not procedural geometry. `tR_Fortification.p3d` (ODOL) is an assembly of **350 proxies** to reusable component p3ds:
+- walls 57, camonets 44, roof 27, window walls 22, floors 22, sashes 14, gateway 9, doorway 7, furniture 4;
+- plus material and tool slot proxies from a shared proxy library whose **file names equal the slot names** (`tr_dependence/tr_proxy/tr_nails/tr_l1_nails.p3d`).
+
+Scripts only show and hide named selections through animation sources. The winter model keeps the same 350 proxies and repoints 44 camonet proxies to a winter variant. For a modular base this keeps one source mesh per component and makes variants cheap. It costs a large selection and animation-source table, so generate that table rather than hand-writing it.
+<!-- tr-mods-extraction: finding C_016 | pass: 1 | date: 2026-09-30 -->
